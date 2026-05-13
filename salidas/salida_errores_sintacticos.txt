@@ -1,0 +1,36 @@
+
+Analizando: pruebas/error_sintactico1.peka
+---------------------------------------------
+[Error sintactico] Linea 3: se esperaba RPAREN, se encontro LBRACE ("{")
+
+-- AST generado ------------------------------------------
+Programa
+  Declaracion: int x
+    Numero: 5 (int)
+  If
+    Condicion:
+      Operacion: >
+        ID: x
+        Numero: 3 (int)
+    Bloque if:
+      Print
+        ID: x
+
+-- Errores sintacticos: 1 --------
+  [Error sintactico] Linea 3: se esperaba RPAREN, se encontro LBRACE ("{")
+
+Analizando: pruebas/error_sintactico2.peka
+---------------------------------------------
+[Error sintactico] Linea 3: se esperaba SEMI, se encontro INT ("int")
+
+-- AST generado ------------------------------------------
+Programa
+  Declaracion: int x
+    Numero: 10 (int)
+  Declaracion: int y
+    Numero: 5 (int)
+  Print
+    ID: y
+
+-- Errores sintacticos: 1 --------
+  [Error sintactico] Linea 3: se esperaba SEMI, se encontro INT ("int")

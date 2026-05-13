@@ -1,0 +1,4 @@
+# error: falta punto y coma
+int x = 10
+int y = 5;
+print(y);
