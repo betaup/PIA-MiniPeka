@@ -13,6 +13,8 @@
 \usepackage{fancyhdr}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, trees}
 \geometry{margin=2.5cm}
 \setlength{\headheight}{14pt}
 \addtolength{\topmargin}{-2pt}
@@ -548,7 +550,1162 @@ reportando cada punto suelto como carácter inválido en su posición exacta.
 \end{table}
 
 % ══════════════════════════════════════════
-%  5. EJEMPLOS DE ENTRADA
+%  5. ANÁLISIS SINTÁCTICO
+% ══════════════════════════════════════════
+\section{Análisis sintáctico}
+
+El analizador sintáctico (parser) de MiniPeka es la segunda fase del
+compilador. Recibe la secuencia de tokens producida por el lexer y verifica
+que su estructura corresponda a la gramática del lenguaje. Si la secuencia
+es válida, construye el \textit{Árbol de Sintaxis Abstracta} (AST), que
+es la representación estructural del programa utilizada por las fases
+posteriores del compilador.
+
+\subsection{Implementación}
+
+El parser está implementado en Python en el archivo \texttt{parser.py}
+como un \textbf{parser LL recursivo descendente}. En este enfoque existe
+una función por cada regla de la gramática, y el parser decide qué
+producción aplicar mirando el token actual sin necesidad de retroceder.
+
+La clase principal \texttt{Parser} recibe la lista de tokens del lexer y
+expone el método \texttt{parsear()}, que recorre los tokens de izquierda
+a derecha construyendo el AST. Se ejecuta desde la terminal así:
+
+\begin{lstlisting}[language=bash, caption={Uso del parser desde terminal}]
+python parser.py <archivo.peka>
+\end{lstlisting}
+
+\noindent
+El AST está compuesto por los siguientes nodos, cada uno representando
+una construcción del lenguaje:
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{@{}p{3.5cm} p{9.0cm}@{}}
+\toprule
+\textbf{Nodo} & \textbf{Descripción} \\
+\midrule
+\texttt{NodoPrograma}    & Raíz del árbol, contiene todas las sentencias \\
+\texttt{NodoDeclaracion} & Declaración de variable con tipo, nombre y valor \\
+\texttt{NodoAsignacion}  & Asignación de valor a una variable existente \\
+\texttt{NodoBinario}     & Operación aritmética o relacional entre dos expresiones \\
+\texttt{NodoNumero}      & Literal numérico entero o flotante \\
+\texttt{NodoID}          & Referencia a una variable por su nombre \\
+\texttt{NodoBooleano}    & Literal booleano \texttt{true} o \texttt{false} \\
+\texttt{NodoIf}          & Estructura condicional con bloque if y else opcional \\
+\texttt{NodoWhile}       & Ciclo while con condición y bloque de cuerpo \\
+\texttt{NodoFuncion}     & Definición de función con parámetros y tipo de retorno \\
+\texttt{NodoLlamada}     & Llamada a función con argumentos \\
+\texttt{NodoPrint}       & Instrucción de salida por consola \\
+\texttt{NodoReturn}      & Instrucción de retorno de valor \\
+\bottomrule
+\end{tabular}
+\caption{Nodos del AST de MiniPeka}
+\end{table}
+
+\noindent
+Las decisiones de diseño más importantes del parser son:
+
+\begin{itemize}
+    \item \textbf{Parser LL recursivo descendente:} cada regla de la
+          gramática tiene su propia función en el parser. Es el enfoque
+          más legible y sencillo de implementar para una gramática como
+          la de MiniPeka.
+
+    \item \textbf{Integración con el lexer:} el parser importa directamente
+          la clase \texttt{Lexer} de \texttt{lexer.py}. Si el lexer detecta
+          errores léxicos, el parser se detiene antes de intentar construir
+          el AST, evitando errores en cascada.
+
+    \item \textbf{Recuperación ante errores:} cuando el parser encuentra
+          un token inesperado, reporta el error con la línea y el token
+          encontrado, y continúa intentando procesar el resto del programa.
+
+    \item \textbf{AST simplificado:} a diferencia del árbol de derivación,
+          el AST no incluye los nodos intermedios de la gramática como
+          \textit{expr}, \textit{term} o \textit{factor}. Solo conserva
+          los nodos semánticamente relevantes.
+\end{itemize}
+
+\subsection{Árbol de derivación}
+
+El árbol de derivación muestra cómo una cadena se genera a partir del
+símbolo inicial de la gramática aplicando las producciones paso a paso.
+A diferencia del AST, el árbol de derivación incluye todos los nodos
+intermedios de la gramática. Para la expresión \texttt{int z = x + y;}
+la derivación es:
+
+\shorthandoff{<>}
+\begin{align*}
+\langle statement \rangle
+    &\Rightarrow \langle decl \rangle \\
+    &\Rightarrow \langle type \rangle\ \textbf{id}\ \texttt{=}
+                 \ \langle expr \rangle\ \texttt{;} \\
+    &\Rightarrow \texttt{int}\ \textbf{z}\ \texttt{=}
+                 \ \langle expr \rangle\ \texttt{;} \\
+    &\Rightarrow \texttt{int}\ \textbf{z}\ \texttt{=}
+                 \ \langle expr \rangle\ \langle op \rangle
+                 \ \langle term \rangle\ \texttt{;} \\
+    &\Rightarrow \texttt{int}\ \textbf{z}\ \texttt{=}
+                 \ \langle term \rangle\ \texttt{+}
+                 \ \langle term \rangle\ \texttt{;} \\
+    &\Rightarrow \texttt{int}\ \textbf{z}\ \texttt{=}
+                 \ \textbf{x}\ \texttt{+}\ \langle term \rangle\ \texttt{;} \\
+    &\Rightarrow \texttt{int}\ \textbf{z}\ \texttt{=}
+                 \ \textbf{x}\ \texttt{+}\ \textbf{y}\ \texttt{;}
+\end{align*}
+\shorthandon{<>}
+
+\noindent
+El AST correspondiente simplifica este árbol eliminando los nodos
+intermedios \texttt{decl}, \texttt{expr} y \texttt{term}, conservando
+únicamente los nodos semánticamente relevantes:
+
+\vspace{0.3cm}
+\begin{center}
+\shorthandoff{<>}
+\begin{tikzpicture}[
+    level distance=1.1cm,
+    level 1/.style={sibling distance=4.0cm},
+    level 2/.style={sibling distance=2.0cm},
+    every node/.style={
+        draw=blue!50, fill=blue!7,
+        rounded corners=3pt,
+        font=\small\bfseries,
+        minimum width=1.8cm,
+        minimum height=0.6cm,
+        inner sep=3pt
+    },
+    term/.style={
+        draw=teal!60!black, fill=teal!10,
+        font=\small\ttfamily\bfseries
+    },
+    edge from parent/.style={
+        draw=gray!60, semithick
+    }
+]
+\node {Declaracion}
+    child { node[term] {int} }
+    child { node[term] {z} }
+    child { node {Operacion +}
+        child { node[term] {ID: x} }
+        child { node[term] {ID: y} }
+    };
+\end{tikzpicture}
+\shorthandon{<>}
+\end{center}
+
+\subsection{Pruebas del parser}
+
+Se ejecutaron tres pruebas sobre el parser con programas válidos que
+cubren las principales construcciones del lenguaje.
+
+\subsubsection{Prueba 1: operaciones básicas}
+
+\begin{lstlisting}[caption={prueba.peka}]
+# prueba basica
+int x = 5;
+int y = 3;
+int z = x + y;
+print(z);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={AST generado -- prueba.peka}]
+Analizando: pruebas/prueba.peka
+---------------------------------------------
+
+-- AST generado ------------------------------------------
+Programa
+  Declaracion: int x
+    Numero: 5 (int)
+  Declaracion: int y
+    Numero: 3 (int)
+  Declaracion: int z
+    Operacion: +
+      ID: x
+      ID: y
+  Print
+    ID: z
+
+-- Sin errores sintacticos -------------------------------
+\end{lstlisting}
+
+\noindent
+El parser reconoció correctamente las tres declaraciones de variables y
+la instrucción \texttt{print}. La operación \texttt{x + y} se representa
+como un \texttt{NodoBinario} con operador \texttt{+} y dos hijos
+\texttt{ID: x} e \texttt{ID: y}.
+
+\subsubsection{Prueba 2: función con parámetros}
+
+\begin{lstlisting}[caption={prueba\_funciones.peka}]
+# prueba con funciones
+fun suma(int a, int b) : int {
+    return a + b;
+}
+int resultado = suma(5, 3);
+print(resultado);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={AST generado -- prueba\_funciones.peka}]
+Analizando: pruebas/prueba_funciones.peka
+---------------------------------------------
+
+-- AST generado ------------------------------------------
+Programa
+  Funcion: suma -> int
+    Parametros: [('int', 'a'), ('int', 'b')]
+    Cuerpo:
+      Return
+        Operacion: +
+          ID: a
+          ID: b
+  Declaracion: int resultado
+    Llamada: suma
+      Numero: 5 (int)
+      Numero: 3 (int)
+  Print
+    ID: resultado
+
+-- Sin errores sintacticos -------------------------------
+\end{lstlisting}
+
+\noindent
+El parser construyó correctamente el nodo \texttt{NodoFuncion} con sus
+parámetros tipados y su cuerpo. La llamada \texttt{suma(5, 3)} se
+representa como \texttt{NodoLlamada} con dos argumentos numéricos.
+
+\subsubsection{Prueba 3: programa completo}
+
+\begin{lstlisting}[caption={prueba\_completa.peka}]
+# programa completo
+fun maximo(int x, int y) : int {
+    if (x > y) {
+        return x;
+    } else {
+        return y;
+    }
+}
+int a = 8;
+int b = 3;
+int resultado = maximo(a, b);
+int contador = 0;
+while (contador < resultado) {
+    contador = contador + 1;
+}
+print(contador);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={AST generado -- prueba\_completa.peka}]
+Analizando: pruebas/prueba_completa.peka
+---------------------------------------------
+
+-- AST generado ------------------------------------------
+Programa
+  Funcion: maximo -> int
+    Parametros: [('int', 'x'), ('int', 'y')]
+    Cuerpo:
+      If
+        Condicion:
+          Operacion: >
+            ID: x
+            ID: y
+        Bloque if:
+          Return
+            ID: x
+        Bloque else:
+          Return
+            ID: y
+  Declaracion: int a
+    Numero: 8 (int)
+  Declaracion: int b
+    Numero: 3 (int)
+  Declaracion: int resultado
+    Llamada: maximo
+      ID: a
+      ID: b
+  Declaracion: int contador
+    Numero: 0 (int)
+  While
+    Condicion:
+      Operacion: 
+        ID: contador
+        ID: resultado
+    Bloque:
+      Asignacion: contador
+        Operacion: +
+          ID: contador
+          Numero: 1 (int)
+  Print
+    ID: contador
+
+-- Sin errores sintacticos -------------------------------
+\end{lstlisting}
+
+\noindent
+El programa completo fue parseado sin errores. El AST refleja
+correctamente la jerarquía del programa: la función \texttt{maximo}
+con su condicional interno, las declaraciones globales, la llamada
+a la función, el ciclo \texttt{while} y la instrucción \texttt{print}
+final.
+
+\subsection{Manejo de errores sintácticos}
+
+Cuando el parser encuentra un token que no corresponde a lo esperado
+por la gramática, reporta un error sintáctico indicando la línea, el
+token esperado y el token encontrado. El parser aplica recuperación
+básica y continúa procesando el resto del programa para detectar todos
+los errores en una sola pasada.
+
+\subsubsection{Error 1: paréntesis no balanceado}
+
+\begin{lstlisting}[caption={error\_sintactico1.peka}]
+# error: parentesis no balanceado
+int x = 5;
+if (x > 3 {
+    print(x);
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida -- error\_sintactico1.peka}]
+Analizando: pruebas/error_sintactico1.peka
+---------------------------------------------
+[Error sintactico] Linea 3: se esperaba RPAREN, se encontro LBRACE ("{")
+
+-- AST generado ------------------------------------------
+Programa
+  Declaracion: int x
+    Numero: 5 (int)
+  If
+    Condicion:
+      Operacion: >
+        ID: x
+        Numero: 3 (int)
+    Bloque if:
+      Print
+        ID: x
+
+-- Errores sintacticos: 1 --------
+  [Error sintactico] Linea 3: se esperaba RPAREN, se encontro LBRACE ("{")
+\end{lstlisting}
+
+\noindent
+El parser detectó que en la línea 3 faltaba el paréntesis de cierre
+\texttt{)} antes de la llave \texttt{\{}. A pesar del error, continuó
+procesando el resto del archivo y construyó un AST parcial.
+
+\subsubsection{Error 2: instrucción sin punto y coma}
+
+\begin{lstlisting}[caption={error\_sintactico2.peka}]
+# error: falta punto y coma
+int x = 10
+int y = 5;
+print(y);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida -- error\_sintactico2.peka}]
+Analizando: pruebas/error_sintactico2.peka
+---------------------------------------------
+[Error sintactico] Linea 3: se esperaba SEMI, se encontro INT ("int")
+
+-- AST generado ------------------------------------------
+Programa
+  Declaracion: int x
+    Numero: 10 (int)
+  Declaracion: int y
+    Numero: 5 (int)
+  Print
+    ID: y
+
+-- Errores sintacticos: 1 --------
+  [Error sintactico] Linea 3: se esperaba SEMI, se encontro INT ("int")
+\end{lstlisting}
+
+\noindent
+El parser detectó que la declaración de \texttt{x} en la línea 2 no
+tenía punto y coma al final. El error se reporta en la línea 3 porque
+es ahí donde el parser encontró el siguiente token \texttt{int} cuando
+esperaba \texttt{;}.
+
+\subsection{Resumen de pruebas}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{5.5cm} p{2.5cm} p{2.0cm} p{3.0cm}@{}}
+\toprule
+\textbf{Archivo} & \textbf{Nodos AST} &
+\textbf{Errores} & \textbf{Resultado} \\
+\midrule
+\texttt{prueba.peka}              & 4 & 0 & Correcto \\
+\texttt{prueba\_funciones.peka}   & 3 & 0 & Correcto \\
+\texttt{prueba\_completa.peka}    & 8 & 0 & Correcto \\
+\texttt{error\_sintactico1.peka}  & 2 & 1 & Error detectado \\
+\texttt{error\_sintactico2.peka}  & 3 & 1 & Error detectado \\
+\bottomrule
+\end{tabular}
+\caption{Resumen de pruebas del analizador sintáctico de MiniPeka}
+\end{table}
+
+% ══════════════════════════════════════════
+%  6. ANÁLISIS SEMÁNTICO
+% ══════════════════════════════════════════
+\section{Análisis semántico}
+
+El análisis semántico verifica que el \textit{significado} del programa
+sea correcto más allá de su estructura sintáctica. El módulo
+\texttt{semantico.py} recibe el AST generado por el parser y realiza
+las siguientes tareas:
+
+\begin{enumerate}
+    \item Construir una \textbf{tabla de símbolos} con soporte de
+          scopes anidados (global y local por función).
+    \item Gestionar el \textbf{alcance y visibilidad} de variables,
+          parámetros y funciones.
+    \item \textbf{Verificar tipos} en expresiones, asignaciones,
+          retornos y llamadas a funciones.
+    \item \textbf{Detectar errores semánticos} y reportarlos con
+          mensajes descriptivos.
+    \item \textbf{Anotar el AST} con el tipo inferido de cada nodo.
+    \item \textbf{Validar el significado del programa} detectando
+          usos inválidos como operaciones aritméticas con booleanos
+          o funciones sin instrucción \texttt{return}.
+\end{enumerate}
+
+% ──────────────────────────────────────────
+\subsection{Tabla de símbolos}
+
+La tabla de símbolos es una pila de diccionarios donde el nivel 0
+corresponde al scope global y cada función abre un scope nuevo al
+entrar y lo cierra al terminar su cuerpo. Cada entrada almacena
+los siguientes atributos:
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}p{2.8cm} p{2.4cm} p{3.2cm} p{4.6cm}@{}}
+\toprule
+\textbf{Atributo} & \textbf{Tipo} & \textbf{Ejemplo} & \textbf{Descripción} \\
+\midrule
+\texttt{nombre}    & \texttt{str}  & \texttt{"suma"}
+    & Identificador del símbolo \\
+\texttt{tipo}      & \texttt{str}  & \texttt{"int"}
+    & Tipo de dato (\texttt{None} para funciones) \\
+\texttt{categoria} & \texttt{str}  & \texttt{"funcion"}
+    & \texttt{variable}, \texttt{parametro} o \texttt{funcion} \\
+\texttt{params}    & \texttt{list} & \texttt{['int','int']}
+    & Tipos de parámetros (solo funciones) \\
+\texttt{retorno}   & \texttt{str}  & \texttt{"int"}
+    & Tipo de retorno (solo funciones) \\
+\bottomrule
+\end{tabular}
+\caption{Atributos de una entrada en la tabla de símbolos}
+\end{table}
+
+Las operaciones de la tabla son:
+
+\begin{itemize}
+    \item \texttt{insertar(simbolo)}: agrega el símbolo al scope
+          actual; devuelve \texttt{False} si ya existe en ese scope
+          (redeclaración).
+    \item \texttt{buscar(nombre)}: recorre los scopes de adentro
+          hacia afuera y devuelve el primer símbolo encontrado
+          o \texttt{None}.
+    \item \texttt{entrar\_scope()} / \texttt{salir\_scope()}:
+          gestión de la pila al entrar y salir de funciones.
+\end{itemize}
+
+% ──────────────────────────────────────────
+\subsection{Manejo de alcance y visibilidad}
+
+Cada función abre un scope local al momento de ser analizada.
+Los parámetros se insertan en ese scope local, por lo que no son
+visibles fuera de la función. Las variables globales sí son
+accesibles desde cualquier scope interior gracias al recorrido
+de adentro hacia afuera en \texttt{buscar()}. Al terminar el
+análisis del cuerpo de la función, el scope local se descarta
+con \texttt{salir\_scope()}.
+
+% ──────────────────────────────────────────
+\subsection{Verificación de tipos}
+
+\subsubsection{Compatibilidad en asignaciones}
+
+Una expresión de tipo $T_e$ puede asignarse a una variable de
+tipo $T_v$ si se cumple:
+
+\[
+T_e = T_v \quad \text{o} \quad
+(T_v = \texttt{float} \;\land\; T_e = \texttt{int})
+\]
+
+Esto permite promover enteros a flotantes, pero no al contrario.
+Asignar \texttt{float} a \texttt{int} es un error semántico.
+
+\subsubsection{Tipo resultante de operaciones aritméticas}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}ccc@{}}
+\toprule
+\textbf{Operando izquierdo} & \textbf{Operando derecho}
+    & \textbf{Tipo resultante} \\
+\midrule
+\texttt{int}   & \texttt{int}   & \texttt{int}   \\
+\texttt{float} & \texttt{float} & \texttt{float} \\
+\texttt{int}   & \texttt{float} & \texttt{float} \\
+\texttt{float} & \texttt{int}   & \texttt{float} \\
+\bottomrule
+\end{tabular}
+\caption{Tipos resultantes en operaciones aritméticas de MiniPeka}
+\end{table}
+
+Los operadores relacionales (\texttt{==}, \texttt{!=}, \texttt{<},
+\texttt{>}) siempre producen \texttt{bool} y requieren operandos
+numéricos. Los operadores aritméticos (\texttt{+}, \texttt{-},
+\texttt{*}, \texttt{/}) rechazan operandos de tipo \texttt{bool}.
+
+% ──────────────────────────────────────────
+\subsection{Detección de errores semánticos}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}p{4.8cm} p{8.2cm}@{}}
+\toprule
+\textbf{Error} & \textbf{Descripción} \\
+\midrule
+Variable no declarada
+    & Uso de un identificador que no existe en ningún scope
+      accesible. \\
+Redeclaración
+    & Declarar la misma variable dos veces en el mismo scope. \\
+Tipos incompatibles en asignación
+    & Asignar un \texttt{float} a una variable \texttt{int}. \\
+Número de argumentos incorrecto
+    & Llamar a una función con distinto número de argumentos
+      al declarado. \\
+Tipo de argumento incompatible
+    & Pasar un argumento cuyo tipo no es compatible con el
+      parámetro esperado. \\
+Tipo de retorno incorrecto
+    & Retornar un valor de tipo diferente al declarado por
+      la función. \\
+Función sin \texttt{return}
+    & Función con tipo de retorno que no contiene instrucción
+      \texttt{return}. \\
+\texttt{return} fuera de función
+    & Instrucción \texttt{return} usada en el scope global. \\
+Operación aritmética con \texttt{bool}
+    & Usar un valor booleano como operando de \texttt{+},
+      \texttt{-}, \texttt{*} o \texttt{/}. \\
+\bottomrule
+\end{tabular}
+\caption{Errores semánticos detectados por \texttt{semantico.py}}
+\end{table}
+
+% ──────────────────────────────────────────
+\subsection{Anotación del AST}
+
+Durante el recorrido del árbol, cada nodo recibe el atributo
+\texttt{tipo\_anotado} con el tipo inferido. Esto enriquece el
+AST con información semántica que puede ser aprovechada por fases
+posteriores como la generación de código intermedio. Los nodos
+que reciben anotación son: \texttt{NodoDeclaracion},
+\texttt{NodoAsignacion}, \texttt{NodoBinario}, \texttt{NodoID},
+\texttt{NodoNumero}, \texttt{NodoBooleano} y \texttt{NodoLlamada}.
+
+% ──────────────────────────────────────────
+\subsection{Implementación}
+
+El módulo \texttt{semantico.py} importa directamente las clases
+del lexer y del parser. Utiliza el patrón \textit{visitor}
+implementado con \texttt{isinstance()} para despachar cada tipo
+de nodo a su método correspondiente. El flujo de ejecución es:
+
+\begin{enumerate}
+    \item Leer y tokenizar el archivo con la clase \texttt{Lexer}.
+    \item Construir el AST con \texttt{Parser.parsear()}.
+    \item Recorrer el AST con \texttt{AnalizadorSemantico.analizar()}.
+    \item Imprimir la tabla de símbolos y el AST anotado.
+    \item Reportar los errores encontrados o confirmar que el
+          programa es semánticamente correcto.
+\end{enumerate}
+
+Se ejecuta desde la terminal con:
+
+\begin{lstlisting}[language=bash, caption={Ejecución del analizador semántico}]
+python semantico.py archivo.peka
+\end{lstlisting}
+
+A continuación se muestra el visitante para declaraciones de
+variables, que ilustra la integración entre tabla de símbolos,
+verificación de tipos y anotación del AST:
+
+\begin{lstlisting}[language=Python,
+    caption={Visitante para declaración de variable}]
+def _v_Declaracion(self, nodo):
+    tipo      = nodo.tipo
+    nombre    = nodo.nombre
+    tipo_expr = self._visitar(nodo.valor)
+
+    if tipo_expr is not None and not asignable(tipo, tipo_expr):
+        self._error(
+            f"No se puede asignar tipo '{tipo_expr}' a variable "
+            f"'{nombre}' de tipo '{tipo}'"
+        )
+
+    nodo.tipo_anotado = tipo
+
+    sim = Simbolo(nombre, tipo, 'variable')
+    if not self.tabla.insertar(sim):
+        self._error(
+            f"Variable '{nombre}' ya fue declarada en este scope"
+        )
+    return tipo
+\end{lstlisting}
+
+% ──────────────────────────────────────────
+\subsection{Pruebas del analizador semántico}
+
+Se diseñaron cinco pruebas con los archivos \texttt{.peka}
+correspondientes: una válida y cuatro con errores semánticos
+deliberados. Las salidas son las producidas por la ejecución
+real del módulo.
+
+% ·· Prueba 1 ··
+\subsubsection{Prueba 1 — Programa válido}
+
+\begin{lstlisting}[caption={prueba\_semantica\_valida.peka}]
+fun suma(int a, int b) : int {
+    return a + b;
+}
+int x = 5;
+int y = 3;
+int resultado = suma(x, y);
+print(resultado);
+float pi = 3.14;
+float area = pi * 2;
+print(area);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 1}]
+Analisis semantico de: pruebas/prueba_semantica_valida.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      suma: funcion, params=['int', 'int'], retorno='int', linea=None
+      x: variable, tipo='int', linea=None
+      y: variable, tipo='int', linea=None
+      resultado: variable, tipo='int', linea=None
+      pi: variable, tipo='float', linea=None
+      area: variable, tipo='float', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Funcion: suma -> int
+    Parametros: [('int', 'a'), ('int', 'b')]
+    Cuerpo:
+      Return
+        Operacion: +  -> int
+          ID: a  -> int
+          ID: b  -> int
+  Declaracion: int x  -> int
+    Numero: 5 (int)  -> int
+  Declaracion: int y  -> int
+    Numero: 3 (int)  -> int
+  Declaracion: int resultado  -> int
+    Llamada: suma  -> int
+      ID: x  -> int
+      ID: y  -> int
+  Print
+    ID: resultado  -> int
+  Declaracion: float pi  -> float
+    Numero: 3.14 (float)  -> float
+  Declaracion: float area  -> float
+    Operacion: *  -> float
+      ID: pi  -> float
+      Numero: 2 (int)  -> int
+  Print
+    ID: area  -> float
+
+Analisis semantico completado sin errores.
+\end{lstlisting}
+
+% ·· Prueba 2 ··
+\subsubsection{Prueba 2 — Error: variable no declarada}
+
+\begin{lstlisting}[caption={error\_semantico\_nodecl.peka}]
+int z = w + 1;
+print(z);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 2}]
+Analisis semantico de: pruebas/error_semantico_nodecl.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      z: variable, tipo='int', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Declaracion: int z  -> int
+    Operacion: +
+      ID: w
+      Numero: 1 (int)  -> int
+  Print
+    ID: z  -> int
+
+Se encontraron 1 error(es) semantico(s):
+  Error semantico: Variable 'w' no declarada
+\end{lstlisting}
+
+% ·· Prueba 3 ··
+\subsubsection{Prueba 3 — Error: tipos incompatibles}
+
+\begin{lstlisting}[caption={error\_semantico\_tipos.peka}]
+int x = 3.14;
+print(x);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 3}]
+Analisis semantico de: pruebas/error_semantico_tipos.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      x: variable, tipo='int', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Declaracion: int x  -> int
+    Numero: 3.14 (float)  -> float
+  Print
+    ID: x  -> int
+
+Se encontraron 1 error(es) semantico(s):
+  Error semantico: No se puede asignar tipo 'float' a variable
+  'x' de tipo 'int'
+\end{lstlisting}
+
+% ·· Prueba 4 ··
+\subsubsection{Prueba 4 — Error: número de argumentos incorrecto}
+
+\begin{lstlisting}[caption={error\_semantico\_args.peka}]
+fun multiplica(int a, int b) : int {
+    return a * b;
+}
+int r = multiplica(5);
+print(r);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 4}]
+Analisis semantico de: pruebas/error_semantico_args.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      multiplica: funcion, params=['int', 'int'],
+                  retorno='int', linea=None
+      r: variable, tipo='int', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Funcion: multiplica -> int
+    Parametros: [('int', 'a'), ('int', 'b')]
+    Cuerpo:
+      Return
+        Operacion: *  -> int
+          ID: a  -> int
+          ID: b  -> int
+  Declaracion: int r  -> int
+    Llamada: multiplica  -> int
+      Numero: 5 (int)
+  Print
+    ID: r  -> int
+
+Se encontraron 1 error(es) semantico(s):
+  Error semantico: Funcion 'multiplica' espera 2 argumento(s),
+  se recibieron 1
+\end{lstlisting}
+
+% ·· Prueba 5 ··
+\subsubsection{Prueba 5 — Error: redeclaración de variable}
+
+\begin{lstlisting}[caption={error\_semantico\_redecl.peka}]
+int n = 10;
+int n = 20;
+print(n);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 5}]
+Analisis semantico de: pruebas/error_semantico_redecl.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      n: variable, tipo='int', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Declaracion: int n  -> int
+    Numero: 10 (int)  -> int
+  Declaracion: int n  -> int
+    Numero: 20 (int)  -> int
+  Print
+    ID: n  -> int
+
+Se encontraron 1 error(es) semantico(s):
+  Error semantico: Variable 'n' ya fue declarada en este scope
+\end{lstlisting}
+
+% ══════════════════════════════════════════
+%  7. ANALISIS SEMANTICAMENTE
+% ══════════════════════════════════════════
+\section{Generación de código intermedio y optimización}
+
+El módulo \texttt{generador\_tac.py} recibe el AST validado
+semánticamente y produce código de tres direcciones (TAC).
+Cada instrucción tiene como máximo tres operandos:
+\texttt{dest = izq op der}. Tras la generación se aplican
+dos optimizaciones y una validación final.
+
+% ──────────────────────────────────────────
+\subsection{Instrucciones TAC generadas}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}p{3.8cm} p{4.2cm} p{4.8cm}@{}}
+\toprule
+\textbf{Instrucción} & \textbf{Forma} & \textbf{Uso} \\
+\midrule
+Asignación          & \texttt{x = y}            & Declaración y asignación \\
+Binaria             & \texttt{t = a op b}       & Expresiones aritméticas y relacionales \\
+Etiqueta            & \texttt{L:}               & Punto de salto \\
+Salto condicional   & \texttt{if not c goto L}  & Control de flujo \\
+Salto incondicional & \texttt{goto L}           & Fin de bloque if/while \\
+Parámetro           & \texttt{param x}          & Argumento de función \\
+Llamada             & \texttt{t = call f, n}    & Invocación de función \\
+Retorno             & \texttt{return x}         & Valor de retorno \\
+Imprimir            & \texttt{print x}          & Salida en consola \\
+\bottomrule
+\end{tabular}
+\caption{Conjunto de instrucciones TAC de MiniPeka}
+\end{table}
+
+% ──────────────────────────────────────────
+\subsection{Optimizaciones aplicadas}
+
+Se aplican dos pasadas secuenciales sobre el TAC generado:
+
+\begin{enumerate}
+    \item \textbf{Propagación de constantes:} si una variable
+          siempre contiene un literal conocido, sus usos se
+          sustituyen por ese valor. Si ambos operandos de una
+          operación son constantes, la expresión se evalúa en
+          tiempo de compilación.
+
+    \item \textbf{Eliminación de código muerto:} instrucciones
+          que asignan a temporales (\texttt{t0}, \texttt{t1}$\ldots$)
+          cuyos resultados nunca son leídos posteriormente
+          se descartan del TAC final.
+\end{enumerate}
+
+% ──────────────────────────────────────────
+\subsection{Validación del código generado}
+
+Tras las optimizaciones se realiza una pasada de validación que
+verifica:
+
+\begin{itemize}
+    \item Toda variable o temporal usada fue definida previamente.
+    \item Todo salto apunta a una etiqueta existente en el TAC.
+\end{itemize}
+
+Si se detecta algún problema se reporta con el número de
+instrucción correspondiente.
+
+% ──────────────────────────────────────────
+\subsection{Flujo de integración}
+
+El generador ejecuta las cinco fases en cadena:
+
+\begin{lstlisting}[language=bash,
+    caption={Ejecución del generador TAC}]
+python generador_tac.py archivo.peka
+\end{lstlisting}
+
+\noindent
+\texttt{Lexer} $\to$ \texttt{Parser} $\to$
+\texttt{AnalizadorSemantico} $\to$ \texttt{GeneradorTAC}
+$\to$ \texttt{propagar\_constantes} $\to$
+\texttt{eliminar\_codigo\_muerto} $\to$ \texttt{validar\_tac}
+
+% ──────────────────────────────────────────
+\subsection{Pruebas de generación TAC}
+
+Se diseñaron cinco pruebas que cubren operaciones básicas,
+funciones, condicionales, ciclos y propagación de constantes.
+Por claridad se muestra el TAC original, el optimizado y el
+resultado de la validación.
+
+% ·· Prueba 1 ··
+\subsubsection{Prueba 1 — Operaciones aritméticas básicas}
+
+\begin{lstlisting}[caption={prueba\_tac\_basica.peka}]
+int a = 5;
+int b = 3;
+int c = a + b;
+print(c);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 1}]
+Codigo de tres direcciones (TAC):
+=======================================================
+    a = 5
+    b = 3
+    t0 = a + b
+    c = t0
+    print c
+
+TAC optimizado (propagacion de constantes):
+=======================================================
+    a = 5
+    b = 3
+    t0 = 8
+    c = 8
+    print 8
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+    a = 5
+    b = 3
+    c = 8
+    print 8
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
+\end{lstlisting}
+
+% ·· Prueba 2 ··
+\subsubsection{Prueba 2 — Función con llamada}
+
+\begin{lstlisting}[caption={prueba\_tac\_funcion.peka}]
+fun suma(int a, int b) : int {
+    return a + b;
+}
+int x = 5;
+int y = 3;
+int resultado = suma(x, y);
+print(resultado);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 2}]
+Codigo de tres direcciones (TAC):
+=======================================================
+
+fun suma:
+    t0 = a + b
+    return t0
+    endfun suma
+    x = 5
+    y = 3
+    param x
+    param y
+    t1 = call suma, 2
+    resultado = t1
+    print resultado
+
+TAC optimizado (propagacion de constantes):
+=======================================================
+
+fun suma:
+    t0 = a + b
+    return t0
+    endfun suma
+    x = 5
+    y = 3
+    param 5
+    param 3
+    t1 = call suma, 2
+    resultado = t1
+    print resultado
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+
+fun suma:
+    t0 = a + b
+    return t0
+    endfun suma
+    x = 5
+    y = 3
+    param 5
+    param 3
+    t1 = call suma, 2
+    resultado = t1
+    print resultado
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
+\end{lstlisting}
+
+% ·· Prueba 3 ··
+\subsubsection{Prueba 3 — Condicional if/else}
+
+\begin{lstlisting}[caption={prueba\_tac\_if.peka}]
+int x = 10;
+int y = 5;
+if (x > y) {
+    print(x);
+} else {
+    print(y);
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 3}]
+Codigo de tres direcciones (TAC):
+=======================================================
+    x = 10
+    y = 5
+    t0 = x > y
+    if not t0 goto else_0
+    print x
+    goto fin_if_1
+else_0:
+    print y
+fin_if_1:
+
+TAC optimizado (propagacion de constantes):
+=======================================================
+    x = 10
+    y = 5
+    t0 = true
+    if not true goto else_0
+    print 10
+    goto fin_if_1
+else_0:
+    print 5
+fin_if_1:
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+    x = 10
+    y = 5
+    if not true goto else_0
+    print 10
+    goto fin_if_1
+else_0:
+    print 5
+fin_if_1:
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
+\end{lstlisting}
+
+% ·· Prueba 4 ··
+\subsubsection{Prueba 4 — Ciclo while}
+
+\begin{lstlisting}[caption={prueba\_tac\_while.peka}]
+int i = 0;
+int suma = 0;
+while (i < 5) {
+    suma = suma + i;
+    i = i + 1;
+}
+print(suma);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 4}]
+Codigo de tres direcciones (TAC):
+=======================================================
+    i = 0
+    suma = 0
+while_0:
+    t0 = i < 5
+    if not t0 goto fin_while_1
+    t1 = suma + i
+    suma = t1
+    t2 = i + 1
+    i = t2
+    goto while_0
+fin_while_1:
+    print suma
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+    i = 0
+    suma = 0
+while_0:
+    if not true goto fin_while_1
+    suma = 0
+    i = 1
+    goto while_0
+fin_while_1:
+    print 0
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
+\end{lstlisting}
+
+% ·· Prueba 5 ··
+\subsubsection{Prueba 5 — Propagación de constantes}
+
+\begin{lstlisting}[caption={prueba\_tac\_constantes.peka}]
+int a = 4;
+int b = 2;
+int c = a + b;
+int d = c * 3;
+print(d);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — Prueba 5}]
+Codigo de tres direcciones (TAC):
+=======================================================
+    a = 4
+    b = 2
+    t0 = a + b
+    c = t0
+    t1 = c * 3
+    d = t1
+    print d
+
+TAC optimizado (propagacion de constantes):
+=======================================================
+    a = 4
+    b = 2
+    t0 = 6
+    c = 6
+    t1 = 18
+    d = 18
+    print 18
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+    a = 4
+    b = 2
+    c = 6
+    d = 18
+    print 18
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
+\end{lstlisting}
+
+% ══════════════════════════════════════════
+%  8. EJEMPLOS DE ENTRADA
 % ══════════════════════════════════════════
 \section{Ejemplos de entrada válidos e inválidos}
 
@@ -615,7 +1772,7 @@ int x = 3.14;
 \end{lstlisting}
 
 % ══════════════════════════════════════════
-%  6. ALCANCE DEL PROYECTO
+%  9. ALCANCE DEL PROYECTO
 % ══════════════════════════════════════════
 \section{Alcance del proyecto}
 
@@ -670,7 +1827,7 @@ int x = 3.14;
 \end{itemize}
 
 % ══════════════════════════════════════════
-%  7. CRONOGRAMA Y ROLES
+%  10. CRONOGRAMA Y ROLES
 % ══════════════════════════════════════════
 \section{Cronograma y roles del equipo}
 
@@ -750,7 +1907,7 @@ Cierre
 \end{table}
 
 % ══════════════════════════════════════════
-%  8. DECLARACIÓN DE INTEGRIDAD ACADÉMICA
+%  11. DECLARACIÓN DE INTEGRIDAD ACADÉMICA
 % ══════════════════════════════════════════
 \section{Declaración de integridad académica}
 
