@@ -1,3 +1,4 @@
+\UseRawInputEncoding
 \documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[spanish]{babel}
@@ -11,9 +12,12 @@
 \usepackage{titlesec}
 \usepackage{fancyhdr}
 \usepackage{graphicx}
+\usepackage{float}
 \geometry{margin=2.5cm}
 \setlength{\headheight}{14pt}
 \addtolength{\topmargin}{-2pt}
+\usepackage{newunicodechar}
+\newunicodechar{─}{\textemdash}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -226,78 +230,325 @@ sobre el token \texttt{ID}: si una cadena coincide con ambos patrones,
 el lexer la clasifica como palabra reservada. Los comentarios son
 reconocidos y descartados por el scanner sin generar ningún token.
 
-\begin{table}[h!]
+\begin{table}[H]
 \centering
-\renewcommand{\arraystretch}{1.25}
-\begin{tabular}{@{}p{2.8cm} p{4.5cm} p{5.0cm}@{}}
+\small
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{@{}p{2.5cm} p{4.5cm} p{4.5cm}@{}}
 \toprule
 \textbf{Token} & \textbf{Expresión regular} & \textbf{Ejemplos} \\
 \midrule
-\texttt{INT}        & \texttt{int}
-                    & \texttt{int} \\
-\texttt{FLOAT\_T}   & \texttt{float}
-                    & \texttt{float} \\
-\texttt{BOOL}       & \texttt{bool}
-                    & \texttt{bool} \\
-\texttt{IF}         & \texttt{if}
-                    & \texttt{if} \\
-\texttt{ELSE}       & \texttt{else}
-                    & \texttt{else} \\
-\texttt{WHILE}      & \texttt{while}
-                    & \texttt{while} \\
-\texttt{FUN}        & \texttt{fun}
-                    & \texttt{fun} \\
-\texttt{RETURN}     & \texttt{return}
-                    & \texttt{return} \\
-\texttt{PRINT}      & \texttt{print}
-                    & \texttt{print} \\
-\texttt{ID}         & \texttt{[a-zA-Z\_][a-zA-Z0-9\_]*}
-                    & \texttt{x}, \texttt{suma}, \texttt{total} \\
-\texttt{NUM\_INT}   & \texttt{[0-9]+}
-                    & \texttt{5}, \texttt{42}, \texttt{100} \\
-\texttt{NUM\_FLOAT} & \texttt{[0-9]+\textbackslash.[0-9]+}
-                    & \texttt{3.14}, \texttt{0.5} \\
-\texttt{ASSIGN}     & \texttt{=}
-                    & \texttt{=} \\
-\texttt{PLUS}       & \texttt{+}
-                    & \texttt{+} \\
-\texttt{MINUS}      & \texttt{-}
-                    & \texttt{-} \\
-\texttt{TIMES}      & \texttt{*}
-                    & \texttt{*} \\
-\texttt{DIVIDE}     & \texttt{/}
-                    & \texttt{/} \\
-\texttt{EQ}         & \texttt{==}
-                    & \texttt{==} \\
-\texttt{NEQ}        & \texttt{!=}
-                    & \texttt{!=} \\
-\texttt{LT}         & \texttt{<}
-                    & \texttt{<} \\
-\texttt{GT}         & \texttt{>}
-                    & \texttt{>} \\
-\texttt{LPAREN}     & \texttt{(}
-                    & \texttt{(} \\
-\texttt{RPAREN}     & \texttt{)}
-                    & \texttt{)} \\
-\texttt{LBRACE}     & \texttt{\{}
-                    & \texttt{\{} \\
-\texttt{RBRACE}     & \texttt{\}}
-                    & \texttt{\}} \\
-\texttt{SEMI}       & \texttt{;}
-                    & \texttt{;} \\
-\texttt{COMMA}      & \texttt{,}
-                    & \texttt{,} \\
-\texttt{COLON}      & \texttt{:}
-                    & \texttt{:} \\
-\texttt{COMMENT}    & \texttt{\#.*}
-                    & \texttt{\# esto es un comentario} \\
+\texttt{INT}        & \texttt{int}                          & \texttt{int} \\
+\texttt{FLOAT\_T}   & \texttt{float}                        & \texttt{float} \\
+\texttt{BOOL}       & \texttt{bool}                         & \texttt{bool} \\
+\texttt{IF}         & \texttt{if}                           & \texttt{if} \\
+\texttt{ELSE}       & \texttt{else}                         & \texttt{else} \\
+\texttt{WHILE}      & \texttt{while}                        & \texttt{while} \\
+\texttt{FUN}        & \texttt{fun}                          & \texttt{fun} \\
+\texttt{RETURN}     & \texttt{return}                       & \texttt{return} \\
+\texttt{PRINT}      & \texttt{print}                        & \texttt{print} \\
+\texttt{ID}         & \texttt{[a-zA-Z\_][a-zA-Z0-9\_]*}    & \texttt{x}, \texttt{suma}, \texttt{total} \\
+\texttt{NUM\_INT}   & \texttt{[0-9]+}                       & \texttt{5}, \texttt{42}, \texttt{100} \\
+\texttt{NUM\_FLOAT} & \texttt{[0-9]+\textbackslash.[0-9]+} & \texttt{3.14}, \texttt{0.5} \\
+\texttt{ASSIGN}     & \texttt{=}                            & \texttt{=} \\
+\texttt{PLUS}       & \texttt{+}                            & \texttt{+} \\
+\texttt{MINUS}      & \texttt{-}                            & \texttt{-} \\
+\texttt{TIMES}      & \texttt{*}                            & \texttt{*} \\
+\texttt{DIVIDE}     & \texttt{/}                            & \texttt{/} \\
+\texttt{EQ}         & \texttt{==}                           & \texttt{==} \\
+\texttt{NEQ}        & \texttt{!=}                           & \texttt{!=} \\
+\texttt{LT}         & \texttt{<}                            & \texttt{<} \\
+\texttt{GT}         & \texttt{>}                            & \texttt{>} \\
+\texttt{LPAREN}     & \texttt{(}                            & \texttt{(} \\
+\texttt{RPAREN}     & \texttt{)}                            & \texttt{)} \\
+\texttt{LBRACE}     & \texttt{\{}                           & \texttt{\{} \\
+\texttt{RBRACE}     & \texttt{\}}                           & \texttt{\}} \\
+\texttt{SEMI}       & \texttt{;}                            & \texttt{;} \\
+\texttt{COMMA}      & \texttt{,}                            & \texttt{,} \\
+\texttt{COLON}      & \texttt{:}                            & \texttt{:} \\
+\texttt{COMMENT}    & \texttt{\#.*}                         & \texttt{\# esto es un comentario} \\
 \bottomrule
 \end{tabular}
 \caption{Tabla de tokens del lenguaje MiniPeka}
 \end{table}
 
 % ══════════════════════════════════════════
-%  4. EJEMPLOS DE ENTRADA
+%  4. ANÁLISIS LÉXICO
+% ══════════════════════════════════════════
+\section{Análisis léxico}
+
+El analizador léxico (scanner) de MiniPeka es la primera fase del compilador.
+Su responsabilidad es leer el archivo fuente con extensión \texttt{.peka}
+carácter por carácter, agruparlos en unidades significativas llamadas
+\textit{lexemas} y clasificarlos en categorías denominadas \textit{tokens}.
+Adicionalmente, el scanner descarta los comentarios y espacios en blanco,
+y reporta con precisión cualquier carácter inválido indicando la línea y
+columna donde ocurrió.
+
+\subsection{Implementación}
+
+El scanner está implementado en Python en el archivo \texttt{lexer.py}.
+Utiliza el módulo \texttt{re} de la biblioteca estándar para definir los
+patrones de cada token mediante expresiones regulares. Todos los patrones
+se compilan en un único patrón maestro usando grupos nombrados
+(\texttt{(?P<nombre>regex)}), lo que permite identificar qué regla
+coincidió en cada posición del código fuente.
+
+La clase principal \texttt{Lexer} recibe el código fuente como cadena de
+texto y expone el método \texttt{tokenizar()}, que recorre el código de
+izquierda a derecha produciendo la secuencia de tokens. El punto de entrada
+del programa acepta un archivo \texttt{.peka} como argumento desde la
+terminal:
+
+\begin{lstlisting}[language=bash, caption={Uso del scanner desde terminal}]
+python lexer.py <archivo.peka>
+\end{lstlisting}
+
+\noindent
+Las decisiones de diseño más importantes del scanner son:
+
+\begin{itemize}
+    \item \textbf{Prioridad de palabras reservadas:} las palabras reservadas
+          se definen antes que el token \texttt{ID} en la lista de reglas,
+          garantizando que nunca sean clasificadas como identificadores.
+
+    \item \textbf{Prioridad de flotantes sobre enteros:} el patrón
+          \texttt{NUM\_FLOAT} se define antes que \texttt{NUM\_INT} para
+          que una cadena como \texttt{3.14} sea reconocida como número
+          real y no como el entero \texttt{3} seguido de un punto suelto.
+
+    \item \textbf{Prioridad de operadores dobles:} los operadores
+          \texttt{==} y \texttt{!=} se definen antes que \texttt{=} para
+          evitar que sean tokenizados como dos operadores separados.
+
+    \item \textbf{Recuperación ante errores:} cuando se encuentra un
+          carácter inválido, el scanner lo reporta con línea y columna
+          exactas y continúa procesando el resto del archivo sin detenerse,
+          permitiendo detectar todos los errores léxicos en una sola pasada.
+
+    \item \textbf{Descarte de comentarios y espacios:} los comentarios y
+          espacios en blanco son reconocidos pero no generan tokens,
+          manteniendo limpia la secuencia de salida.
+\end{itemize}
+
+\subsection{Pruebas de tokenización}
+
+Se ejecutaron ocho pruebas sobre el scanner, seis con código válido y
+dos con errores léxicos intencionales.
+
+\subsubsection{Prueba 1: operaciones básicas}
+
+\begin{lstlisting}[caption={prueba.peka}]
+# prueba basica
+int x = 5;
+int y = 3;
+int z = x + y;
+print(z);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — prueba.peka}]
+Analizando: prueba.peka
+── Tokens generados ──────────────────────────
+  Token(INT,    'int',   linea=2, col=1)
+  Token(ID,     'x',     linea=2, col=5)
+  Token(ASSIGN, '=',     linea=2, col=7)
+  Token(NUM_INT,'5',     linea=2, col=9)
+  Token(SEMI,   ';',     linea=2, col=10)
+  Token(INT,    'int',   linea=3, col=1)
+  Token(ID,     'y',     linea=3, col=5)
+  Token(ASSIGN, '=',     linea=3, col=7)
+  Token(NUM_INT,'3',     linea=3, col=9)
+  Token(SEMI,   ';',     linea=3, col=10)
+  Token(INT,    'int',   linea=4, col=1)
+  Token(ID,     'z',     linea=4, col=5)
+  Token(ASSIGN, '=',     linea=4, col=7)
+  Token(ID,     'x',     linea=4, col=9)
+  Token(PLUS,   '+',     linea=4, col=11)
+  Token(ID,     'y',     linea=4, col=13)
+  Token(SEMI,   ';',     linea=4, col=14)
+  Token(PRINT,  'print', linea=5, col=1)
+  Token(LPAREN, '(',     linea=5, col=6)
+  Token(ID,     'z',     linea=5, col=7)
+  Token(RPAREN, ')',     linea=5, col=8)
+  Token(SEMI,   ';',     linea=5, col=9)
+── Total: 22 tokens ──────────────────────────
+── Sin errores lexicos ───────────────────────
+\end{lstlisting}
+
+\newpage
+\subsubsection{Prueba 2: funciones con parámetros}
+
+\begin{lstlisting}[caption={prueba\_funciones.peka}]
+# prueba con funciones
+fun suma(int a, int b) : int {
+    return a + b;
+}
+int resultado = suma(5, 3);
+print(resultado);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — prueba\_funciones.peka}]
+Analizando: prueba_funciones.peka
+── Total: 33 tokens ──────────────────────────
+── Sin errores lexicos ───────────────────────
+\end{lstlisting}
+
+\subsubsection{Prueba 3: condicional if/else}
+
+\begin{lstlisting}[caption={prueba\_condicional.peka}]
+# prueba con if else
+int x = 10;
+int y = 5;
+if (x > y) {
+    print(x);
+} else {
+    print(y);
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — prueba\_condicional.peka}]
+Analizando: prueba_condicional.peka
+── Total: 31 tokens ──────────────────────────
+── Sin errores lexicos ───────────────────────
+\end{lstlisting}
+
+\newpage
+\subsubsection{Prueba 4: ciclo while}
+
+\begin{lstlisting}[caption={prueba\_while.peka}]
+# prueba con ciclo while
+int contador = 0;
+int suma = 0;
+while (contador < 5) {
+    suma = suma + contador;
+    contador = contador + 1;
+}
+print(suma);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — prueba\_while.peka}]
+Analizando: prueba_while.peka
+── Total: 35 tokens ──────────────────────────
+── Sin errores lexicos ───────────────────────
+\end{lstlisting}
+
+\subsubsection{Prueba 5: números flotantes}
+
+\begin{lstlisting}[caption={prueba\_float.peka}]
+# prueba con flotantes
+float pi = 3.14;
+float radio = 2.0;
+float area = pi * radio;
+print(area);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — prueba\_float.peka}]
+Analizando: prueba_float.peka
+── Total: 22 tokens ──────────────────────────
+── Sin errores lexicos ───────────────────────
+\end{lstlisting}
+
+\newpage
+\subsubsection{Prueba 6: programa completo}
+
+\begin{lstlisting}[caption={prueba\_completa.peka}]
+# programa completo
+fun maximo(int x, int y) : int {
+    if (x > y) {
+        return x;
+    } else {
+        return y;
+    }
+}
+int a = 8;
+int b = 3;
+int resultado = maximo(a, b);
+int contador = 0;
+while (contador < resultado) {
+    contador = contador + 1;
+}
+print(contador);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — prueba\_completa.peka}]
+Analizando: prueba_completa.peka
+── Total: 74 tokens ──────────────────────────
+── Sin errores lexicos ───────────────────────
+\end{lstlisting}
+
+\subsubsection{Prueba 7: errores léxicos — caracteres inválidos}
+
+\begin{lstlisting}[caption={error\_lexico.peka}]
+int x = 5@;
+float y = 3.14$;
+bool z = true;
+int w = x + @y;
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — error\_lexico.peka}]
+Analizando: error_lexico.peka
+[Error lexico] Caracter invalido "@" en linea 1, columna 10
+[Error lexico] Caracter invalido "$" en linea 2, columna 15
+[Error lexico] Caracter invalido "@" en linea 4, columna 13
+── Total: 22 tokens ──────────────────────────
+── Errores lexicos: 3 ────────────────────────
+  Linea 1, columna 10: caracter invalido "@"
+  Linea 2, columna 15: caracter invalido "$"
+  Linea 4, columna 13: caracter invalido "@"
+\end{lstlisting}
+
+\subsubsection{Prueba 8: errores léxicos — números mal formados}
+
+\begin{lstlisting}[caption={error\_numero.peka}]
+int x = 5.;
+int y = .14;
+int z = 5..3;
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Salida — error\_numero.peka}]
+Analizando: error_numero.peka
+[Error lexico] Caracter invalido "." en linea 1, columna 10
+[Error lexico] Caracter invalido "." en linea 2, columna 9
+[Error lexico] Caracter invalido "." en linea 3, columna 10
+[Error lexico] Caracter invalido "." en linea 3, columna 11
+── Total: 16 tokens ──────────────────────────
+── Errores lexicos: 4 ────────────────────────
+  Linea 1, columna 10: caracter invalido "."
+  Linea 2, columna 9:  caracter invalido "."
+  Linea 3, columna 10: caracter invalido "."
+  Linea 3, columna 11: caracter invalido "."
+\end{lstlisting}
+
+\noindent
+El scanner identifica correctamente que \texttt{5.}, \texttt{.14} y
+\texttt{5..3} no satisfacen el patrón del token \texttt{NUM\_FLOAT},
+reportando cada punto suelto como carácter inválido en su posición exacta.
+
+\subsection{Resumen de pruebas}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{4.5cm} p{2.0cm} p{2.5cm} p{3.5cm}@{}}
+\toprule
+\textbf{Archivo} & \textbf{Tokens} &
+\textbf{Errores} & \textbf{Resultado} \\
+\midrule
+\texttt{prueba.peka}            & 22 & 0 & Correcto \\
+\texttt{prueba\_funciones.peka} & 33 & 0 & Correcto \\
+\texttt{prueba\_condicional.peka} & 31 & 0 & Correcto \\
+\texttt{prueba\_while.peka}     & 35 & 0 & Correcto \\
+\texttt{prueba\_float.peka}     & 22 & 0 & Correcto \\
+\texttt{prueba\_completa.peka}  & 74 & 0 & Correcto \\
+\texttt{error\_lexico.peka}     & 22 & 3 & Errores detectados \\
+\texttt{error\_numero.peka}     & 16 & 4 & Errores detectados \\
+\bottomrule
+\end{tabular}
+\caption{Resumen de pruebas del analizador léxico de MiniPeka}
+\end{table}
+
+% ══════════════════════════════════════════
+%  5. EJEMPLOS DE ENTRADA
 % ══════════════════════════════════════════
 \section{Ejemplos de entrada válidos e inválidos}
 
@@ -321,7 +572,6 @@ fun maximo(int x, int y) : int {
         return y;
     }
 }
-
 int resultado = maximo(8, 3);
 print(resultado);
 \end{lstlisting}
@@ -329,12 +579,10 @@ print(resultado);
 \begin{lstlisting}[caption={Ejemplo válido 3: ciclo while con acumulador}]
 int contador = 0;
 int suma = 0;
-
 while (contador < 5) {
     suma = suma + contador;
     contador = contador + 1;
 }
-
 print(suma);
 \end{lstlisting}
 
@@ -344,30 +592,30 @@ Los siguientes fragmentos contienen errores que el compilador debe
 detectar y reportar con un mensaje claro.
 
 \begin{lstlisting}[caption={Error léxico: carácter inválido}]
-int x = 5@;   # '@' no pertenece al alfabeto de MiniPeka
+int x = 5@;
 \end{lstlisting}
 
 \begin{lstlisting}[caption={Error sintáctico: paréntesis no balanceado}]
-if (x > 3 {   # falta el ')' de cierre
+if (x > 3 {
     print(x);
 }
 \end{lstlisting}
 
 \begin{lstlisting}[caption={Error sintáctico: instrucción sin punto y coma}]
-int z = 10    # falta ';' al final de la declaracion
+int z = 10
 print(z);
 \end{lstlisting}
 
 \begin{lstlisting}[caption={Error semántico: variable no declarada}]
-int z = w + 1;   # 'w' no ha sido declarada
+int z = w + 1;
 \end{lstlisting}
 
 \begin{lstlisting}[caption={Error semántico: tipos incompatibles}]
-int x = 3.14;   # no se puede asignar float a int sin conversion
+int x = 3.14;
 \end{lstlisting}
 
 % ══════════════════════════════════════════
-%  5. ALCANCE DEL PROYECTO
+%  6. ALCANCE DEL PROYECTO
 % ══════════════════════════════════════════
 \section{Alcance del proyecto}
 
@@ -422,13 +670,12 @@ int x = 3.14;   # no se puede asignar float a int sin conversion
 \end{itemize}
 
 % ══════════════════════════════════════════
-%  6. CRONOGRAMA Y ROLES
+%  7. CRONOGRAMA Y ROLES
 % ══════════════════════════════════════════
 \section{Cronograma y roles del equipo}
 
 \subsection{Roles del equipo}
-
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}p{5.5cm} p{3.2cm} p{4.3cm}@{}}
@@ -459,8 +706,7 @@ Brandon Jahir Reyna Marroquín
 \end{table}
 
 \subsection{Cronograma de actividades}
-
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \renewcommand{\arraystretch}{1.25}
 \begin{tabular}{@{}p{1.5cm} p{4.5cm} p{4.2cm} p{2.3cm}@{}}
@@ -504,7 +750,7 @@ Cierre
 \end{table}
 
 % ══════════════════════════════════════════
-%  7. DECLARACIÓN DE INTEGRIDAD ACADÉMICA
+%  8. DECLARACIÓN DE INTEGRIDAD ACADÉMICA
 % ══════════════════════════════════════════
 \section{Declaración de integridad académica}
 
