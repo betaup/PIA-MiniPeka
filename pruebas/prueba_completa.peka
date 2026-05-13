@@ -1,0 +1,19 @@
+# programa completo
+fun maximo(int x, int y) : int {
+    if (x > y) {
+        return x;
+    } else {
+        return y;
+    }
+}
+
+int a = 8;
+int b = 3;
+int resultado = maximo(a, b);
+
+int contador = 0;
+while (contador < resultado) {
+    contador = contador + 1;
+}
+
+print(contador);

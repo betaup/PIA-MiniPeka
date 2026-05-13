@@ -1,0 +1,5 @@
+# prueba con flotantes
+float pi = 3.14;
+float radio = 2.0;
+float area = pi * radio;
+print(area);

@@ -1,0 +1,7 @@
+# prueba con funciones
+fun suma(int a, int b) : int {
+    return a + b;
+}
+
+int resultado = suma(5, 3);
+print(resultado);
