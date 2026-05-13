@@ -3,11 +3,11 @@ import os
 sys.stdout.reconfigure(encoding='utf-8')
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lexer import Lexer
-from parser import (Parser, NodoPrograma, NodoDeclaracion, NodoAsignacion,
+from src.lexer import Lexer
+from src.parser import (Parser, NodoPrograma, NodoDeclaracion, NodoAsignacion,
                     NodoBinario, NodoNumero, NodoID, NodoIf, NodoWhile,
                     NodoFuncion, NodoLlamada, NodoPrint, NodoReturn, NodoBooleano)
-from semantico import AnalizadorSemantico
+from src.semantico import AnalizadorSemantico
 
 # --------------------------------------------------
 #  INSTRUCCIONES TAC
