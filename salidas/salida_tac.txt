@@ -1,0 +1,193 @@
+
+Codigo de tres direcciones (TAC):
+=======================================================
+    a = 5
+    b = 3
+    t0 = a + b
+    c = t0
+    print c
+
+TAC optimizado (propagacion de constantes):
+=======================================================
+    a = 5
+    b = 3
+    t0 = 8
+    c = 8
+    print 8
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+    a = 5
+    b = 3
+    c = 8
+    print 8
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
+
+Codigo de tres direcciones (TAC):
+=======================================================
+
+fun suma:
+    t0 = a + b
+    return t0
+    endfun suma
+    x = 5
+    y = 3
+    param x
+    param y
+    t1 = call suma, 2
+    resultado = t1
+    print resultado
+
+TAC optimizado (propagacion de constantes):
+=======================================================
+
+fun suma:
+    t0 = a + b
+    return t0
+    endfun suma
+    x = 5
+    y = 3
+    param 5
+    param 3
+    t1 = call suma, 2
+    resultado = t1
+    print resultado
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+
+fun suma:
+    t0 = a + b
+    return t0
+    endfun suma
+    x = 5
+    y = 3
+    param 5
+    param 3
+    t1 = call suma, 2
+    resultado = t1
+    print resultado
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
+
+Codigo de tres direcciones (TAC):
+=======================================================
+    x = 10
+    y = 5
+    t0 = x > y
+    if not t0 goto else_0
+    print x
+    goto fin_if_1
+else_0:
+    print y
+fin_if_1:
+
+TAC optimizado (propagacion de constantes):
+=======================================================
+    x = 10
+    y = 5
+    t0 = true
+    if not true goto else_0
+    print 10
+    goto fin_if_1
+else_0:
+    print 5
+fin_if_1:
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+    x = 10
+    y = 5
+    if not true goto else_0
+    print 10
+    goto fin_if_1
+else_0:
+    print 5
+fin_if_1:
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
+
+Codigo de tres direcciones (TAC):
+=======================================================
+    i = 0
+    suma = 0
+while_0:
+    t0 = i < 5
+    if not t0 goto fin_while_1
+    t1 = suma + i
+    suma = t1
+    t2 = i + 1
+    i = t2
+    goto while_0
+fin_while_1:
+    print suma
+
+TAC optimizado (propagacion de constantes):
+=======================================================
+    i = 0
+    suma = 0
+while_0:
+    t0 = true
+    if not true goto fin_while_1
+    t1 = 0
+    suma = 0
+    t2 = 1
+    i = 1
+    goto while_0
+fin_while_1:
+    print 0
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+    i = 0
+    suma = 0
+while_0:
+    if not true goto fin_while_1
+    suma = 0
+    i = 1
+    goto while_0
+fin_while_1:
+    print 0
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
+
+Codigo de tres direcciones (TAC):
+=======================================================
+    a = 4
+    b = 2
+    t0 = a + b
+    c = t0
+    t1 = c * 3
+    d = t1
+    print d
+
+TAC optimizado (propagacion de constantes):
+=======================================================
+    a = 4
+    b = 2
+    t0 = 6
+    c = 6
+    t1 = 18
+    d = 18
+    print 18
+
+TAC tras eliminacion de codigo muerto:
+=======================================================
+    a = 4
+    b = 2
+    c = 6
+    d = 18
+    print 18
+
+Validacion del codigo generado:
+=======================================================
+  Codigo generado validado correctamente.
