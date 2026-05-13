@@ -1,0 +1,537 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\geometry{margin=2.5cm}
+\setlength{\headheight}{14pt}
+\addtolength{\topmargin}{-2pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small Compiladores --- UANL}
+\lhead{\small Equipo: No Compila}
+\rfoot{\thepage}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    frame=single,
+    backgroundcolor=\color{gray!8},
+    rulecolor=\color{gray!40},
+    breaklines=true,
+    showstringspaces=false,
+    keywordstyle=\color{blue!70!black}\bfseries,
+    commentstyle=\color{green!50!black}\itshape,
+    stringstyle=\color{red!60!black}
+}
+
+\begin{document}
+
+% ══════════════════════════════════════════
+%  PORTADA
+% ══════════════════════════════════════════
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+
+{\Large \textbf{Universidad Autónoma de Nuevo León}} \\[0.4cm]
+{\large Facultad de Ciencias Físico Matemáticas} \\[2cm]
+
+{\Huge \textbf{MiniPeka}} \\[0.3cm]
+{\Large Compilador de un lenguaje tipo calculadora con funciones} \\[2cm]
+
+{\large \textbf{Proyecto Integrador Académico (PIA)}} \\[0.2cm]
+{\large Compiladores} \\[0.2cm]
+{\large \textbf{Entregable 1}} \\[2cm]
+
+\begin{tabular}{ll}
+\textbf{Equipo:}      & No Compila \\[0.3cm]
+\textbf{Integrantes:} & Regina Hernández Rodríguez \\
+                      & César Oziel Guajardo Rodríguez \\
+                      & Johan Joel Rodríguez Medina \\
+                      & Rodrigo López Escobedo \\
+                      & Diego Ángel Torres Azua \\
+                      & Brandon Jahir Reyna Marroquín \\[0.5cm]
+\textbf{Profesor:}    & Luis Ángel Gutiérrez Rodríguez \\[0.3cm]
+\textbf{Fecha:}       & Mayo 2026 \\
+\end{tabular}
+
+\vfill
+\end{titlepage}
+
+% ══════════════════════════════════════════
+%  TABLA DE CONTENIDO
+% ══════════════════════════════════════════
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════
+%  1. DEFINICIÓN DEL LENGUAJE
+% ══════════════════════════════════════════
+\section{Definición del lenguaje: MiniPeka}
+
+MiniPeka es un lenguaje de programación simple diseñado con fines educativos
+para ilustrar el proceso completo de compilación. Su sintaxis está inspirada
+en lenguajes imperativos como C y Python, simplificada para facilitar la
+implementación de cada fase del compilador. MiniPeka soporta declaración de
+variables, operaciones aritméticas, estructuras de control básicas, definición
+de funciones y entrada/salida por consola.
+
+\subsection{Características principales}
+
+\begin{itemize}
+    \item \textbf{Tipado estático:} todas las variables deben declararse con
+          su tipo antes de usarse. Los tipos disponibles son \texttt{int},
+          \texttt{float} y \texttt{bool}.
+
+    \item \textbf{Funciones con parámetros:} el lenguaje permite definir
+          funciones con parámetros tipados y valor de retorno explícito.
+
+    \item \textbf{Estructuras de control:} soporta \texttt{if}/\texttt{else}
+          y el ciclo \texttt{while}.
+
+    \item \textbf{Operadores aritméticos y relacionales:} suma, resta,
+          multiplicación, división, y comparadores como \texttt{==},
+          \texttt{!=}, \texttt{<}, \texttt{>}.
+
+    \item \textbf{Instrucción de salida:} la función \texttt{print()}
+          permite mostrar valores en consola.
+
+    \item \textbf{Comentarios:} se soportan comentarios de una línea con
+          el símbolo \texttt{\#}.
+\end{itemize}
+
+\subsection{Ejemplo representativo del lenguaje}
+
+El siguiente fragmento muestra las capacidades principales de MiniPeka:
+
+\begin{lstlisting}[caption={Ejemplo general de MiniPeka}]
+# Declaracion de variables
+int x = 5;
+int y = 3;
+float resultado = 0.0;
+
+# Funcion que suma dos enteros
+fun suma(int a, int b) : int {
+    return a + b;
+}
+
+# Uso de la funcion y estructura de control
+int total = suma(x, y);
+
+if (total > 6) {
+    print(total);
+} else {
+    print(0);
+}
+
+# Ciclo while
+int i = 0;
+while (i < total) {
+    i = i + 1;
+}
+\end{lstlisting}
+
+% ══════════════════════════════════════════
+%  2. GRAMÁTICA PRELIMINAR
+% ══════════════════════════════════════════
+\section{Gramática preliminar}
+
+La gramática de MiniPeka está definida como una gramática libre de contexto
+(CFG). Se utiliza la notación BNF extendida donde \texttt{|} indica
+alternativas, los elementos entre corchetes \texttt{[ ]} son opcionales y
+los elementos entre llaves \texttt{\{ \}} pueden repetirse cero o más veces.
+
+\subsection{Producciones principales}
+
+\shorthandoff{<>}
+\begin{align*}
+\langle program \rangle      &\to \{ \langle statement \rangle \} \\[4pt]
+\langle statement \rangle    &\to \langle decl \rangle
+                              \mid \langle assign \rangle
+                              \mid \langle if\_stmt \rangle
+                              \mid \langle while\_stmt \rangle
+                              \mid \langle fun\_def \rangle
+                              \mid \langle print\_stmt \rangle
+                              \mid \langle return\_stmt \rangle \\[4pt]
+\langle decl \rangle         &\to \langle type \rangle\ \textbf{id}
+                                   \ \texttt{=}\ \langle expr \rangle
+                                   \ \texttt{;} \\[4pt]
+\langle assign \rangle       &\to \textbf{id}\ \texttt{=}
+                                   \ \langle expr \rangle\ \texttt{;} \\[4pt]
+\langle if\_stmt \rangle     &\to \texttt{if}\ \texttt{(}
+                                   \langle expr \rangle \texttt{)}
+                                   \ \langle block \rangle
+                                   \ [ \texttt{else}\ \langle block \rangle ] \\[4pt]
+\langle while\_stmt \rangle  &\to \texttt{while}\ \texttt{(}
+                                   \langle expr \rangle \texttt{)}
+                                   \ \langle block \rangle \\[4pt]
+\langle fun\_def \rangle     &\to \texttt{fun}\ \textbf{id}\ \texttt{(}
+                                   \langle params \rangle \texttt{)}
+                                   \ \texttt{:}\ \langle type \rangle
+                                   \ \langle block \rangle \\[4pt]
+\langle block \rangle        &\to \texttt{\{}
+                                   \ \{ \langle statement \rangle \}
+                                   \ \texttt{\}} \\[4pt]
+\langle params \rangle       &\to \langle type \rangle\ \textbf{id}
+                                   \ \{ \texttt{,}\ \langle type \rangle
+                                   \ \textbf{id} \}
+                                   \mid \varepsilon \\[4pt]
+\langle print\_stmt \rangle  &\to \texttt{print}\ \texttt{(}
+                                   \langle expr \rangle \texttt{)}
+                                   \ \texttt{;} \\[4pt]
+\langle return\_stmt \rangle &\to \texttt{return}\ \langle expr \rangle
+                                   \ \texttt{;} \\[4pt]
+\langle expr \rangle         &\to \langle expr \rangle\ \langle op \rangle
+                                   \ \langle term \rangle
+                                   \mid \langle term \rangle \\[4pt]
+\langle term \rangle         &\to \textbf{id}
+                                   \mid \textbf{num}
+                                   \mid \texttt{(}\ \langle expr \rangle
+                                   \ \texttt{)}
+                                   \mid \langle fun\_call \rangle \\[4pt]
+\langle fun\_call \rangle    &\to \textbf{id}\ \texttt{(}
+                                   \langle args \rangle \texttt{)} \\[4pt]
+\langle args \rangle         &\to \langle expr \rangle
+                                   \ \{ \texttt{,}\ \langle expr \rangle \}
+                                   \mid \varepsilon \\[4pt]
+\langle op \rangle           &\to \texttt{+} \mid \texttt{-}
+                                   \mid \texttt{*} \mid \texttt{/}
+                                   \mid \texttt{==} \mid \texttt{!=}
+                                   \mid \texttt{<} \mid \texttt{>} \\[4pt]
+\langle type \rangle         &\to \texttt{int} \mid \texttt{float}
+                                   \mid \texttt{bool}
+\end{align*}
+\shorthandon{<>}
+
+% ══════════════════════════════════════════
+%  3. IDENTIFICACIÓN DE TOKENS
+% ══════════════════════════════════════════
+\section{Identificación de tokens}
+
+Los tokens son las unidades léxicas mínimas del lenguaje. El analizador
+léxico de MiniPeka reconoce las siguientes categorías, cada una definida
+mediante una expresión regular. Las palabras reservadas tienen prioridad
+sobre el token \texttt{ID}: si una cadena coincide con ambos patrones,
+el lexer la clasifica como palabra reservada. Los comentarios son
+reconocidos y descartados por el scanner sin generar ningún token.
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{2.8cm} p{4.5cm} p{5.0cm}@{}}
+\toprule
+\textbf{Token} & \textbf{Expresión regular} & \textbf{Ejemplos} \\
+\midrule
+\texttt{INT}        & \texttt{int}
+                    & \texttt{int} \\
+\texttt{FLOAT\_T}   & \texttt{float}
+                    & \texttt{float} \\
+\texttt{BOOL}       & \texttt{bool}
+                    & \texttt{bool} \\
+\texttt{IF}         & \texttt{if}
+                    & \texttt{if} \\
+\texttt{ELSE}       & \texttt{else}
+                    & \texttt{else} \\
+\texttt{WHILE}      & \texttt{while}
+                    & \texttt{while} \\
+\texttt{FUN}        & \texttt{fun}
+                    & \texttt{fun} \\
+\texttt{RETURN}     & \texttt{return}
+                    & \texttt{return} \\
+\texttt{PRINT}      & \texttt{print}
+                    & \texttt{print} \\
+\texttt{ID}         & \texttt{[a-zA-Z\_][a-zA-Z0-9\_]*}
+                    & \texttt{x}, \texttt{suma}, \texttt{total} \\
+\texttt{NUM\_INT}   & \texttt{[0-9]+}
+                    & \texttt{5}, \texttt{42}, \texttt{100} \\
+\texttt{NUM\_FLOAT} & \texttt{[0-9]+\textbackslash.[0-9]+}
+                    & \texttt{3.14}, \texttt{0.5} \\
+\texttt{ASSIGN}     & \texttt{=}
+                    & \texttt{=} \\
+\texttt{PLUS}       & \texttt{+}
+                    & \texttt{+} \\
+\texttt{MINUS}      & \texttt{-}
+                    & \texttt{-} \\
+\texttt{TIMES}      & \texttt{*}
+                    & \texttt{*} \\
+\texttt{DIVIDE}     & \texttt{/}
+                    & \texttt{/} \\
+\texttt{EQ}         & \texttt{==}
+                    & \texttt{==} \\
+\texttt{NEQ}        & \texttt{!=}
+                    & \texttt{!=} \\
+\texttt{LT}         & \texttt{<}
+                    & \texttt{<} \\
+\texttt{GT}         & \texttt{>}
+                    & \texttt{>} \\
+\texttt{LPAREN}     & \texttt{(}
+                    & \texttt{(} \\
+\texttt{RPAREN}     & \texttt{)}
+                    & \texttt{)} \\
+\texttt{LBRACE}     & \texttt{\{}
+                    & \texttt{\{} \\
+\texttt{RBRACE}     & \texttt{\}}
+                    & \texttt{\}} \\
+\texttt{SEMI}       & \texttt{;}
+                    & \texttt{;} \\
+\texttt{COMMA}      & \texttt{,}
+                    & \texttt{,} \\
+\texttt{COLON}      & \texttt{:}
+                    & \texttt{:} \\
+\texttt{COMMENT}    & \texttt{\#.*}
+                    & \texttt{\# esto es un comentario} \\
+\bottomrule
+\end{tabular}
+\caption{Tabla de tokens del lenguaje MiniPeka}
+\end{table}
+
+% ══════════════════════════════════════════
+%  4. EJEMPLOS DE ENTRADA
+% ══════════════════════════════════════════
+\section{Ejemplos de entrada válidos e inválidos}
+
+\subsection{Entradas válidas}
+
+Los siguientes fragmentos son sintáctica y semánticamente correctos en
+MiniPeka y deben ser procesados sin errores por el compilador.
+
+\begin{lstlisting}[caption={Ejemplo válido 1: operaciones aritméticas básicas}]
+int a = 10;
+int b = 4;
+int c = a + b * 2;
+print(c);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Ejemplo válido 2: función con retorno y condicional}]
+fun maximo(int x, int y) : int {
+    if (x > y) {
+        return x;
+    } else {
+        return y;
+    }
+}
+
+int resultado = maximo(8, 3);
+print(resultado);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Ejemplo válido 3: ciclo while con acumulador}]
+int contador = 0;
+int suma = 0;
+
+while (contador < 5) {
+    suma = suma + contador;
+    contador = contador + 1;
+}
+
+print(suma);
+\end{lstlisting}
+
+\subsection{Entradas inválidas}
+
+Los siguientes fragmentos contienen errores que el compilador debe
+detectar y reportar con un mensaje claro.
+
+\begin{lstlisting}[caption={Error léxico: carácter inválido}]
+int x = 5@;   # '@' no pertenece al alfabeto de MiniPeka
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Error sintáctico: paréntesis no balanceado}]
+if (x > 3 {   # falta el ')' de cierre
+    print(x);
+}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Error sintáctico: instrucción sin punto y coma}]
+int z = 10    # falta ';' al final de la declaracion
+print(z);
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Error semántico: variable no declarada}]
+int z = w + 1;   # 'w' no ha sido declarada
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Error semántico: tipos incompatibles}]
+int x = 3.14;   # no se puede asignar float a int sin conversion
+\end{lstlisting}
+
+% ══════════════════════════════════════════
+%  5. ALCANCE DEL PROYECTO
+% ══════════════════════════════════════════
+\section{Alcance del proyecto}
+
+\subsection{Lo que el proyecto SÍ incluye}
+
+\begin{itemize}
+    \item Analizador léxico completo con manejo de errores léxicos y
+          reporte de línea y columna del error.
+
+    \item Analizador sintáctico basado en gramática LL con manejo de
+          errores sintácticos y mensajes descriptivos.
+
+    \item Generación del árbol de sintaxis abstracta (AST) para cualquier
+          programa válido en MiniPeka.
+
+    \item Tabla de símbolos con soporte de scopes anidados (global y local
+          por función).
+
+    \item Análisis semántico: verificación de tipos, variables declaradas
+          antes de su uso y compatibilidad de tipos en asignaciones.
+
+    \item Generación de código de tres direcciones (TAC) para expresiones
+          aritméticas, asignaciones y estructuras de control.
+
+    \item Al menos una optimización básica: propagación de constantes.
+
+    \item Pruebas de funcionamiento con al menos cinco ejemplos válidos
+          y cinco inválidos.
+
+    \item Documentación técnica completa de cada fase del compilador.
+
+    \item Video explicativo de 5 minutos demostrando el funcionamiento.
+\end{itemize}
+
+\subsection{Lo que el proyecto NO incluye}
+
+\begin{itemize}
+    \item Generación de código ejecutable (código máquina o ensamblador).
+
+    \item Tipos de datos compuestos como arreglos, structs o cadenas de
+          texto.
+
+    \item Recursión directa o indirecta entre funciones.
+
+    \item Forma SSA (considerada opcional según el PIA).
+
+    \item Manejo de excepciones o errores en tiempo de ejecución.
+
+    \item Interfaz gráfica de usuario.
+
+    \item Operadores lógicos (\texttt{and}, \texttt{or}, \texttt{not}).
+\end{itemize}
+
+% ══════════════════════════════════════════
+%  6. CRONOGRAMA Y ROLES
+% ══════════════════════════════════════════
+\section{Cronograma y roles del equipo}
+
+\subsection{Roles del equipo}
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{5.5cm} p{3.2cm} p{4.3cm}@{}}
+\toprule
+\textbf{Integrante} & \textbf{Rol principal} & \textbf{Responsabilidad} \\
+\midrule
+Regina Hernández Rodríguez
+    & Líder de proyecto
+    & Coordinación general, documentación y presentación final \\
+César Oziel Guajardo Rodríguez
+    & Desarrollador léxico
+    & Implementación del scanner y manejo de errores léxicos \\
+Johan Joel Rodríguez Medina
+    & Desarrollador sintáctico
+    & Implementación del parser y generación del AST \\
+Rodrigo López Escobedo
+    & Desarrollador semántico
+    & Tabla de símbolos, chequeo de tipos y errores semánticos \\
+Diego Ángel Torres Azua
+    & Desarrollador de backend
+    & Generación de TAC y optimización de código \\
+Brandon Jahir Reyna Marroquín
+    & Integración y pruebas
+    & Integración de módulos, pruebas y validación del sistema \\
+\bottomrule
+\end{tabular}
+\caption{Roles del equipo No Compila}
+\end{table}
+
+\subsection{Cronograma de actividades}
+
+\begin{table}[h!]
+\centering
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}p{1.5cm} p{4.5cm} p{4.2cm} p{2.3cm}@{}}
+\toprule
+\textbf{Semana} & \textbf{Actividad} &
+\textbf{Responsable(s)} & \textbf{Entregable} \\
+\midrule
+1
+    & Definición del lenguaje, gramática preliminar, tokens, ejemplos
+      de entrada y alcance del proyecto
+    & Todo el equipo
+    & Entregable 1 \\
+2
+    & Implementación del scanner, expresiones regulares, manejo de
+      errores léxicos y pruebas de tokenización
+    & César, Brandon
+    & Entregable 1 \\
+3
+    & Gramática formal completa, implementación del parser,
+      árbol de derivación y generación del AST
+    & Johan, Rodrigo
+    & Entregable 2 \\
+4
+    & Tabla de símbolos, análisis semántico, verificación
+      de tipos y anotación del AST
+    & Rodrigo, Diego
+    & Entregable 2 \\
+5
+    & Generación de TAC, optimización básica, integración
+      de módulos y pruebas finales del sistema
+    & Diego, Brandon, Regina
+    & Entregable 2 \\
+Cierre
+    & Video explicativo, exposición del proyecto y
+      documentación final
+    & Todo el equipo
+    & Presentación final \\
+\bottomrule
+\end{tabular}
+\caption{Cronograma del proyecto MiniPeka}
+\end{table}
+
+% ══════════════════════════════════════════
+%  7. DECLARACIÓN DE INTEGRIDAD ACADÉMICA
+% ══════════════════════════════════════════
+\section{Declaración de integridad académica}
+
+Los integrantes del equipo \textbf{No Compila} declaramos que el presente
+proyecto es de nuestra autoría original. Todo el código, análisis,
+diagramas y documentación han sido desarrollados por los integrantes del
+equipo. El uso de fuentes externas, bibliografía o herramientas de apoyo
+será debidamente referenciado en el documento final. Nos comprometemos a
+respetar el reglamento institucional de la Universidad Autónoma de Nuevo
+León en materia de integridad académica y a no incurrir en plagio ni en
+el uso indebido de código de terceros.
+
+\vspace{1.5cm}
+
+\noindent
+\begin{tabular}{p{7cm} p{6cm}}
+\rule{6cm}{0.4pt} & \rule{6cm}{0.4pt} \\
+Regina Hernández Rodríguez & César Oziel Guajardo Rodríguez \\[1.5cm]
+\rule{6cm}{0.4pt} & \rule{6cm}{0.4pt} \\
+Johan Joel Rodríguez Medina & Rodrigo López Escobedo \\[1.5cm]
+\rule{6cm}{0.4pt} & \rule{6cm}{0.4pt} \\
+Diego Ángel Torres Azua & Brandon Jahir Reyna Marroquín \\
+\end{tabular}
+
+\vspace{1.5cm}
+\noindent
+Fecha: \underline{\hspace{5cm}} \hfill
+Firma del profesor: \underline{\hspace{5cm}}
+
+\end{document}
