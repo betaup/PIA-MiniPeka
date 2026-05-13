@@ -1,0 +1,82 @@
+Analizando: pruebas/prueba.peka
+---------------------------------------------
+
+-- AST generado ------------------------------------------
+Programa
+  Declaracion: int x
+    Numero: 5 (int)
+  Declaracion: int y
+    Numero: 3 (int)
+  Declaracion: int z
+    Operacion: +
+      ID: x
+      ID: y
+  Print
+    ID: z
+
+-- Sin errores sintacticos -------------------------------
+
+Analizando: pruebas/prueba_completa.peka
+---------------------------------------------
+
+-- AST generado ------------------------------------------
+Programa
+  Funcion: maximo -> int
+    Parametros: [('int', 'x'), ('int', 'y')]
+    Cuerpo:
+      If
+        Condicion:
+          Operacion: >
+            ID: x
+            ID: y
+        Bloque if:
+          Return
+            ID: x
+        Bloque else:
+          Return
+            ID: y
+  Declaracion: int a
+    Numero: 8 (int)
+  Declaracion: int b
+    Numero: 3 (int)
+  Declaracion: int resultado
+    Llamada: maximo
+      ID: a
+      ID: b
+  Declaracion: int contador
+    Numero: 0 (int)
+  While
+    Condicion:
+      Operacion: <
+        ID: contador
+        ID: resultado
+    Bloque:
+      Asignacion: contador
+        Operacion: +
+          ID: contador
+          Numero: 1 (int)
+  Print
+    ID: contador
+
+-- Sin errores sintacticos -------------------------------
+
+Analizando: pruebas/prueba_funciones.peka
+---------------------------------------------
+
+-- AST generado ------------------------------------------
+Programa
+  Funcion: suma -> int
+    Parametros: [('int', 'a'), ('int', 'b')]
+    Cuerpo:
+      Return
+        Operacion: +
+          ID: a
+          ID: b
+  Declaracion: int resultado
+    Llamada: suma
+      Numero: 5 (int)
+      Numero: 3 (int)
+  Print
+    ID: resultado
+
+-- Sin errores sintacticos -------------------------------
