@@ -1,0 +1,3 @@
+# error_semantico_tipos.peka
+int x = 3.14;
+print(x);

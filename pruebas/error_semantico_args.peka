@@ -1,0 +1,6 @@
+# error_semantico_args.peka
+fun multiplica(int a, int b) : int {
+    return a * b;
+}
+int r = multiplica(5);
+print(r);

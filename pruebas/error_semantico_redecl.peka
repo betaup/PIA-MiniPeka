@@ -1,0 +1,4 @@
+# error_semantico_redecl.peka
+int n = 10;
+int n = 20;
+print(n);

@@ -1,0 +1,123 @@
+
+Analisis semantico de: pruebas/prueba_semantica_valida.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      suma: funcion, params=['int', 'int'], retorno='int', linea=None
+      x: variable, tipo='int', linea=None
+      y: variable, tipo='int', linea=None
+      resultado: variable, tipo='int', linea=None
+      pi: variable, tipo='float', linea=None
+      area: variable, tipo='float', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Funcion: suma -> int
+    Parametros: [('int', 'a'), ('int', 'b')]
+    Cuerpo:
+      Return
+        Operacion: +  -> int
+          ID: a  -> int
+          ID: b  -> int
+  Declaracion: int x  -> int
+    Numero: 5 (int)  -> int
+  Declaracion: int y  -> int
+    Numero: 3 (int)  -> int
+  Declaracion: int resultado  -> int
+    Llamada: suma  -> int
+      ID: x  -> int
+      ID: y  -> int
+  Print
+    ID: resultado  -> int
+  Declaracion: float pi  -> float
+    Numero: 3.14 (float)  -> float
+  Declaracion: float area  -> float
+    Operacion: *  -> float
+      ID: pi  -> float
+      Numero: 2 (int)  -> int
+  Print
+    ID: area  -> float
+
+Analisis semantico completado sin errores.
+
+Analisis semantico de: pruebas/error_semantico_nodecl.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      z: variable, tipo='int', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Declaracion: int z  -> int
+    Operacion: +
+      ID: w
+      Numero: 1 (int)  -> int
+  Print
+    ID: z  -> int
+
+Se encontraron 1 error(es) semantico(s):
+  Error semantico: Variable 'w' no declarada
+
+Analisis semantico de: pruebas/error_semantico_tipos.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      x: variable, tipo='int', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Declaracion: int x  -> int
+    Numero: 3.14 (float)  -> float
+  Print
+    ID: x  -> int
+
+Se encontraron 1 error(es) semantico(s):
+  Error semantico: No se puede asignar tipo 'float' a variable 'x' de tipo 'int'
+
+Analisis semantico de: pruebas/error_semantico_args.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      multiplica: funcion, params=['int', 'int'], retorno='int', linea=None
+      r: variable, tipo='int', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Funcion: multiplica -> int
+    Parametros: [('int', 'a'), ('int', 'b')]
+    Cuerpo:
+      Return
+        Operacion: *  -> int
+          ID: a  -> int
+          ID: b  -> int
+  Declaracion: int r  -> int
+    Llamada: multiplica  -> int
+      Numero: 5 (int)
+  Print
+    ID: r  -> int
+
+Se encontraron 1 error(es) semantico(s):
+  Error semantico: Funcion 'multiplica' espera 2 argumento(s), se recibieron 1
+
+Analisis semantico de: pruebas/error_semantico_redecl.peka
+=======================================================
+  Tabla de simbolos:
+    [global]
+      n: variable, tipo='int', linea=None
+
+AST anotado:
+-------------------------------------------------------
+Programa
+  Declaracion: int n  -> int
+    Numero: 10 (int)  -> int
+  Declaracion: int n  -> int
+    Numero: 20 (int)  -> int
+  Print
+    ID: n  -> int
+
+Se encontraron 1 error(es) semantico(s):
+  Error semantico: Variable 'n' ya fue declarada en este scope
